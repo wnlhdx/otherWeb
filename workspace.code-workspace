@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"name": "🔍Decompiler!",
+			"uri": "decompileFs:/"
+		},
+		{
+			"path": "..\\..\\..\\..\\work\\code\\vscode"
+		}
+	],
+	"settings": {
+		"java.home": "",
+		"java.project.sourcePaths": [
+			"test1",
+			"java/test1"
+    ],
+    "liveServer.settings.multiRootWorkspaceName": "vscode",
+    "projectManager.git.baseFolders": [
+      "vscode/myWebsite"
+    ]
+	}
+}
