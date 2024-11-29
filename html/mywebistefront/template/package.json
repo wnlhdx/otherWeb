@@ -16,6 +16,9 @@
     "format:check": "prettier --check \"**/*.{js,jsx,mjs,ts,tsx,mdx}\" --cache"
   },
   "dependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "@babel/preset-react": "^7.25.9",
     "@emotion/cache": "11.11.0",
     "@emotion/react": "11.11.4",
     "@emotion/server": "11.11.0",
@@ -31,6 +34,7 @@
     "@mui/x-date-pickers": "6.19.6",
     "@phosphor-icons/react": "2.0.15",
     "apexcharts": "3.46.0",
+    "babel-loader": "^9.2.1",
     "dayjs": "1.11.10",
     "next": "14.1.3",
     "react": "18.2.0",
