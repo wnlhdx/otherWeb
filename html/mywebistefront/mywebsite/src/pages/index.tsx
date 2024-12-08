@@ -28,7 +28,7 @@ export default function Home() {
   const [timeEnd, setEndTime] = useState<Dayjs | null>(dayjs());
   const [plans, setPlans] = useState<Plan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
-  const API_BASE_URL = 'http://192.168.1.2:8080';
+  const API_BASE_URL = 'http://192.168.1.3:8080';
 
   useEffect(() => {
     fetchAllPlans();
