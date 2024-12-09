@@ -16,15 +16,44 @@ import {
   DialogContent,
   DialogTitle,
 } from "@mui/material";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import dayjs from "dayjs";
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'; 
+
+// 定义Plan类型
+interface Plan {
+  planName: string;
+  timeStart: Date;
+  timeEnd: Date;
+  planDetails: string;
+  projectName: string;
+  projectDetails: string;
+  nightTimeStart: Date;
+  nightTimeEnd: Date;
+  projectFinishPercent: string;
+  dayOfWeek: string;
+  bookName: string;
+  bookContent: string;
+  majorIn: string;
+  projectMonth: string;
+  projectYear: string;
+  relaxItem: string;
+  relaxItemForeign: string;
+  typeOfLearn: string;
+  typeDetail: string;
+  standardLearn: string;
+  updateTime: Date;
+  bookPage: string;
+}
 
 const PlansTable = () => {
-  const [plans, setPlans] = useState([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
-  const [currentPlan, setCurrentPlan] = useState(null);
+  const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const baseAPI = "http://192.168.1.3:8080/plans";
 
@@ -36,6 +65,12 @@ const PlansTable = () => {
     try {
       const response = await fetch(`${baseAPI}/all`);
       const data = await response.json();
+      data.sort((a: Plan, b: Plan) => {
+        if (a.hasOwnProperty("timeStart") && b.hasOwnProperty("timeStart")) {
+          return new Date(a.timeStart).getTime() - new Date(b.timeStart).getTime();
+        }
+        return 0;
+      });
       setPlans(data);
     } catch (error) {
       console.error("Error fetching plans:", error);
@@ -44,40 +79,40 @@ const PlansTable = () => {
 
   const handleAdd = () => {
     setCurrentPlan({
-      planName: "",
-      timeStart: null,
-      timeEnd: null,
-      planDetails: "",
-      projectName: "",
-      projectDetails: "",
-      nightTimeStart: null,
-      nightTimeEnd: null,
-      projectFinishPercent: "",
-      dayOfWeek: "",
-      bookName: "",
-      bookContent: "",
-      majorIn: "",
-      projectMonth: "",
-      projectYear: "",
-      relaxItem: "",
-      relaxItemForeign: "",
-      typeOfLearn: "",
-      typeDetail: "",
-      standardLearn: "",
-      updateTime: null,
-      bookPage:""
+      planName: '',
+      timeStart: dayjs().toDate(),
+      timeEnd: dayjs().toDate(),
+      planDetails: '',
+      projectName: '',
+      projectDetails: '',
+      nightTimeStart: dayjs().toDate(),
+      nightTimeEnd: dayjs().toDate(),
+      projectFinishPercent: '',
+      dayOfWeek: '',
+      bookName: '',
+      bookContent: '',
+      majorIn: '',
+      projectMonth: '',
+      projectYear: '',
+      relaxItem: '',
+      relaxItemForeign: '',
+      typeOfLearn: '',
+      typeDetail: '',
+      standardLearn: '',
+      updateTime: dayjs().toDate(),
+      bookPage: ''
     });
     setIsEditing(false);
     setOpenDialog(true);
   };
 
-  const handleEdit = (plan) => {
+  const handleEdit = (plan: Plan) => {
     setCurrentPlan(plan);
     setIsEditing(true);
     setOpenDialog(true);
   };
 
-  const handleDelete = async (planName) => {
+  const handleDelete = async (planName: string) => {
     try {
       await fetch(`${baseAPI}/delete/${planName}`, {
         method: "DELETE",
@@ -92,13 +127,21 @@ const PlansTable = () => {
     try {
       const method = isEditing ? "PUT" : "POST";
       const url = isEditing ? `${baseAPI}/update` : `${baseAPI}/add`;
+
+      // 自动设置 updateTime 为当前时间
+      const planToSave: Plan = {
+        ...currentPlan!,
+        updateTime: dayjs().toDate(),
+      };
+
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(currentPlan),
+        body: JSON.stringify(planToSave),
       });
+
       if (response.ok) {
         fetchPlans();
         setOpenDialog(false);
@@ -110,7 +153,11 @@ const PlansTable = () => {
     }
   };
 
-  const renderField = (label, value, onChange, type = "text") => (
+  const handleFieldChange = (key: keyof Plan, value: any) => {
+    setCurrentPlan((prev) => (prev ? { ...prev, [key]: value } : prev));
+  };
+
+  const renderField = (label: string, value: any, onChange: (value: any) => void, type: string = "text") => (
     <TextField
       label={label}
       value={value || ""}
@@ -144,9 +191,35 @@ const PlansTable = () => {
           <TableBody>
             {plans.map((plan) => (
               <TableRow key={plan.planName}>
-                {Object.values(plan).map((value, index) => (
-                  <TableCell key={index}>{value || "—"}</TableCell>
-                ))}
+                {Object.keys(plan).map((key) => {
+                  const typedKey = key as keyof Plan; 
+                  const value = plan[typedKey];
+                  const isTimeField = key.toLowerCase().includes("time");
+                  return (
+                    <TableCell key={key}>
+                      {isTimeField ? (
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                          <TimePicker
+                            label={key}
+                            value={value ? dayjs(value) : null}
+                            onChange={(newValue) =>
+                              handleFieldChange(key as keyof Plan, newValue)
+                            }
+                          />
+                        </LocalizationProvider>
+                      ) : (
+                        <TextField
+                          value={value}
+                          onChange={(e) =>
+                            handleFieldChange(key as keyof Plan, e.target.value)
+                          }
+                          fullWidth
+                          variant="standard"
+                        />
+                      )}
+                    </TableCell>
+                  );
+                })}
                 <TableCell>
                   <IconButton onClick={() => handleEdit(plan)}>
                     <EditIcon />
@@ -165,37 +238,34 @@ const PlansTable = () => {
         <DialogTitle>{isEditing ? "编辑计划" : "添加计划"}</DialogTitle>
         <DialogContent>
           {Object.keys(currentPlan || {}).map((key) => {
-            const isDateTimeField = key.toLowerCase().includes("time");
-            return isDateTimeField ? (
-              <DateTimePicker
-                key={key}
-                label={key}
-                value={currentPlan[key]}
-                onChange={(value) =>
-                  setCurrentPlan((prev) => ({ ...prev, [key]: value }))
-                }
-                renderInput={(props) => (
-                  <TextField {...props} fullWidth margin="normal" />
-                )}
-              />
+            const typedKey = key as keyof Plan;
+            const isTimeField = typedKey.toLowerCase().includes("time");
+            return isTimeField ? (
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <TimePicker
+                  key={typedKey}
+                  label={typedKey}
+                  // 将值转换为 Dayjs 类型
+                  value={currentPlan![typedKey] ? dayjs(currentPlan![typedKey]) : null}
+                  onChange={(value) =>
+                    setCurrentPlan((prev) =>
+                      prev ? { ...prev, [typedKey]: value } : prev
+                    )
+                  }
+                />
+              </LocalizationProvider>
             ) : (
               renderField(
-                key,
-                currentPlan[key],
+                typedKey,
+                currentPlan![typedKey],
                 (value) =>
-                  setCurrentPlan((prev) => ({ ...prev, [key]: value }))
+                  setCurrentPlan((prev) =>
+                    prev ? { ...prev, [typedKey]: value } : prev
+                  )
               )
             );
           })}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="secondary">
-            取消
-          </Button>
-          <Button onClick={handleSave} color="primary">
-            保存
-          </Button>
-        </DialogActions>
       </Dialog>
     </Box>
   );
