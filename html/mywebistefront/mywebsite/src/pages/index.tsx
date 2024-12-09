@@ -65,6 +65,7 @@ const PlansTable = () => {
       typeDetail: "",
       standardLearn: "",
       updateTime: null,
+      bookPage:""
     });
     setIsEditing(false);
     setOpenDialog(true);
